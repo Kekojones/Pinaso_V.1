@@ -1,0 +1,45 @@
+language: python
+
+# Use container-based infrastructure
+sudo: false
+
+# Those without lxml wheels first because building lxml is slow
+python:
+ - 2.7
+ - 3.4
+ - 3.5
+ - 3.6
+# Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
+env:
+- XMLPARSER=LXML
+- XMLPARSER=STDLIB
+
+
+install:
+# Check whether to install lxml
+ - if [ "$XMLPARSER" == "LXML" ]; then pip install lxml; fi
+
+ - travis_retry pip install coverage
+
+
+script:
+ - coverage run --source=gpxpy ./test.py
+
+after_success:
+ - pip install coveralls
+ - coveralls
+
+after_script:
+ - coverage report
+ - pip install pyflakes pycodestyle
+ - pyflakes . | tee >(wc -l)
+ - pycodestyle --statistics --count .
+
+matrix:
+  fast_finish: true
